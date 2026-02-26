@@ -190,6 +190,11 @@
             color: white;
         }
 
+        button.btn-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
         .btn-small {
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
@@ -332,7 +337,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
         thead tr {
@@ -345,13 +350,15 @@
             text-align: left;
             color: var(--color-text-primary);
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
+            line-height: 1.2;
         }
 
         td {
             padding: 0.5rem 0.25rem;
             color: var(--color-text-secondary);
             border-bottom: 1px solid var(--color-border);
+            font-size: 0.75rem;
         }
 
         tbody tr:active {
@@ -401,6 +408,8 @@
             max-width: 500px;
             width: 100%;
             border: 1px solid var(--color-border);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-header {
@@ -445,15 +454,62 @@
             flex: 1;
         }
 
+        .machine-card {
+            background: var(--color-bg-tertiary);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--color-border);
+        }
+
+        .machine-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .machine-card-title {
+            flex: 1;
+        }
+
+        .machine-card-title h3 {
+            color: var(--color-accent);
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .machine-card-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .machine-card-info {
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .machine-card-stats {
+            color: var(--color-text-muted);
+            font-size: 0.75rem;
+        }
+
+        .add-param-button {
+            margin-top: 0.5rem;
+            background: var(--color-success);
+        }
+
         @media (min-width: 768px) {
             table {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
             }
             th, td {
                 padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
             }
             th {
-                font-size: 0.85rem;
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -687,6 +743,8 @@
                                 <th>Давл.<br>(бар)</th>
                                 <th>Сопло</th>
                                 <th>Фокус<br>(мм)</th>
+                                <th>Комп.<br>наруж.<br>(мм)</th>
+                                <th>Комп.<br>внутр.<br>(мм)</th>
                             </tr>
                         </thead>
                         <tbody id="laserTableBody">
@@ -696,6 +754,7 @@
                 <p style="color: var(--color-text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
                     💡 Нажмите на строку для редактирования
                 </p>
+                <button class="add-param-button" onclick="openAddParamModal()">➕ Добавить толщину</button>
             </div>
         </div>
 
@@ -722,11 +781,11 @@
         </div>
     </div>
 
-    <!-- Модальное окно: Добавить станок -->
+    <!-- Модальное окно: Добавить/редактировать станок -->
     <div id="addMachineModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Новый станок</h3>
+                <h3 id="machineModalTitle">Новый станок</h3>
                 <button class="modal-close" onclick="closeModal('addMachineModal')">×</button>
             </div>
             <div class="form-group">
@@ -739,12 +798,12 @@
             </div>
             <div class="flex-buttons">
                 <button class="btn-secondary" onclick="closeModal('addMachineModal')">Отмена</button>
-                <button class="btn-success" onclick="addMachine()">Создать</button>
+                <button class="btn-success" onclick="saveMachine()">Сохранить</button>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно: Редактировать параметр -->
+    <!-- Модальное окно: Редактировать параметр резки -->
     <div id="editParamModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -756,6 +815,56 @@
                 <button class="btn-danger" onclick="deleteParam()">🗑️ Удалить</button>
                 <button class="btn-secondary" onclick="closeModal('editParamModal')">Отмена</button>
                 <button class="btn-success" onclick="saveParam()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Добавить новый параметр резки -->
+    <div id="addParamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить параметр резки</h3>
+                <button class="modal-close" onclick="closeModal('addParamModal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>Толщина (мм)</label>
+                <input type="number" id="new_thickness" step="0.1" placeholder="1.5">
+            </div>
+            <div class="form-group">
+                <label>Скорость (м/мин)</label>
+                <input type="number" id="new_speed" step="0.1" placeholder="15">
+            </div>
+            <div class="form-group">
+                <label>Мощность (Вт)</label>
+                <input type="number" id="new_power" placeholder="1500">
+            </div>
+            <div class="form-group">
+                <label>Газ</label>
+                <input type="text" id="new_gas" placeholder="N₂">
+            </div>
+            <div class="form-group">
+                <label>Давление (бар)</label>
+                <input type="number" id="new_pressure" step="0.1" placeholder="12">
+            </div>
+            <div class="form-group">
+                <label>Сопло (мм)</label>
+                <input type="text" id="new_nozzle" placeholder="1.5S">
+            </div>
+            <div class="form-group">
+                <label>Фокус (мм)</label>
+                <input type="number" id="new_focus" step="0.1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Компенсация наружных кромок (мм)</label>
+                <input type="number" id="new_compOuter" step="0.01" value="0.2">
+            </div>
+            <div class="form-group">
+                <label>Компенсация внутренних кромок (мм)</label>
+                <input type="number" id="new_compInner" step="0.01" value="0.2">
+            </div>
+            <div class="flex-buttons">
+                <button class="btn-secondary" onclick="closeModal('addParamModal')">Отмена</button>
+                <button class="btn-success" onclick="addNewParam()">Добавить</button>
             </div>
         </div>
     </div>
@@ -773,11 +882,22 @@
         };
 
         let editingParam = null;
+        let editingMachineId = null;
 
         function loadDatabase() {
             const stored = localStorage.getItem('laserDB');
             if (stored) {
                 db = JSON.parse(stored);
+                // Миграция старых данных: добавление компенсаций если их нет
+                db.machines.forEach(machine => {
+                    Object.keys(machine.materials).forEach(material => {
+                        machine.materials[material].forEach(param => {
+                            if (param.compOuter === undefined) param.compOuter = 0.2;
+                            if (param.compInner === undefined) param.compInner = 0.2;
+                        });
+                    });
+                });
+                saveDatabase();
             } else {
                 // Инициализация с дефолтным станком
                 db.machines = [{
@@ -786,32 +906,32 @@
                     power: 1500,
                     materials: {
                         steel: [
-                            { thickness: 1, speed: 20, power: 1500, gas: 'N₂/Air', pressure: 10, nozzle: '1.5S', focus: 0 },
-                            { thickness: 2, speed: 5, power: 1500, gas: 'O₂', pressure: 2, nozzle: '1.2D', focus: 3 },
-                            { thickness: 3, speed: 3.6, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.2D', focus: 3 },
-                            { thickness: 4, speed: 2.5, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.2D', focus: 3 },
-                            { thickness: 5, speed: 1.8, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.2D', focus: 3 },
-                            { thickness: 6, speed: 1.4, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.5D', focus: 3 },
-                            { thickness: 8, speed: 1.2, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.5D', focus: 3 },
-                            { thickness: 10, speed: 1.0, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '2.0D', focus: 2.5 },
-                            { thickness: 12, speed: 0.8, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '2.5D', focus: 2.5 }
+                            { thickness: 1, speed: 20, power: 1500, gas: 'N₂/Air', pressure: 10, nozzle: '1.5S', focus: 0, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 2, speed: 5, power: 1500, gas: 'O₂', pressure: 2, nozzle: '1.2D', focus: 3, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 3, speed: 3.6, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.2D', focus: 3, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 4, speed: 2.5, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.2D', focus: 3, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 5, speed: 1.8, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.2D', focus: 3, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 6, speed: 1.4, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.5D', focus: 3, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 8, speed: 1.2, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.5D', focus: 3, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 10, speed: 1.0, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '2.0D', focus: 2.5, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 12, speed: 0.8, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '2.5D', focus: 2.5, compOuter: 0.2, compInner: 0.2 }
                         ],
                         stainless: [
-                            { thickness: 1, speed: 20, power: 1500, gas: 'N₂', pressure: 10, nozzle: '1.5S', focus: 0 },
-                            { thickness: 2, speed: 7, power: 1500, gas: 'N₂', pressure: 12, nozzle: '2.0S', focus: -1 },
-                            { thickness: 3, speed: 4.5, power: 1500, gas: 'N₂', pressure: 12, nozzle: '2.5S', focus: -1.5 },
-                            { thickness: 5, speed: 1.5, power: 1500, gas: 'N₂', pressure: 14, nozzle: '3.0S', focus: -2.5 }
+                            { thickness: 1, speed: 20, power: 1500, gas: 'N₂', pressure: 10, nozzle: '1.5S', focus: 0, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 2, speed: 7, power: 1500, gas: 'N₂', pressure: 12, nozzle: '2.0S', focus: -1, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 3, speed: 4.5, power: 1500, gas: 'N₂', pressure: 12, nozzle: '2.5S', focus: -1.5, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 5, speed: 1.5, power: 1500, gas: 'N₂', pressure: 14, nozzle: '3.0S', focus: -2.5, compOuter: 0.2, compInner: 0.2 }
                         ],
                         aluminum: [
-                            { thickness: 1, speed: 18, power: 1500, gas: 'N₂', pressure: 12, nozzle: '1.5S', focus: 0 },
-                            { thickness: 2, speed: 6, power: 1500, gas: 'N₂', pressure: 14, nozzle: '2.0S', focus: -1 },
-                            { thickness: 3, speed: 2.5, power: 1500, gas: 'N₂', pressure: 14, nozzle: '2.5S', focus: -1.5 },
-                            { thickness: 4, speed: 0.8, power: 1500, gas: 'N₂', pressure: 16, nozzle: '3.0S', focus: -2.0 }
+                            { thickness: 1, speed: 18, power: 1500, gas: 'N₂', pressure: 12, nozzle: '1.5S', focus: 0, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 2, speed: 6, power: 1500, gas: 'N₂', pressure: 14, nozzle: '2.0S', focus: -1, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 3, speed: 2.5, power: 1500, gas: 'N₂', pressure: 14, nozzle: '2.5S', focus: -1.5, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 4, speed: 0.8, power: 1500, gas: 'N₂', pressure: 16, nozzle: '3.0S', focus: -2.0, compOuter: 0.2, compInner: 0.2 }
                         ],
                         brass: [
-                            { thickness: 1, speed: 15, power: 1500, gas: 'N₂', pressure: 12, nozzle: '1.5S', focus: 0 },
-                            { thickness: 2, speed: 5, power: 1500, gas: 'N₂', pressure: 14, nozzle: '2.0S', focus: -1 },
-                            { thickness: 3, speed: 1.8, power: 1500, gas: 'N₂', pressure: 14, nozzle: '2.5S', focus: -1.5 }
+                            { thickness: 1, speed: 15, power: 1500, gas: 'N₂', pressure: 12, nozzle: '1.5S', focus: 0, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 2, speed: 5, power: 1500, gas: 'N₂', pressure: 14, nozzle: '2.0S', focus: -1, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 3, speed: 1.8, power: 1500, gas: 'N₂', pressure: 14, nozzle: '2.5S', focus: -1.5, compOuter: 0.2, compInner: 0.2 }
                         ]
                     }
                 }];
@@ -843,21 +963,42 @@
             const list = document.getElementById('machinesList');
             list.innerHTML = '';
             db.machines.forEach(m => {
+                const totalParams = Object.values(m.materials).reduce((sum, arr) => sum + arr.length, 0);
                 const card = document.createElement('div');
-                card.style.cssText = 'background: var(--color-bg-tertiary); padding: 1rem; border-radius: 6px; margin-bottom: 0.75rem; border: 1px solid var(--color-border);';
+                card.className = 'machine-card';
                 card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <h3 style="color: var(--color-accent); font-size: 1rem;">${m.name}</h3>
-                        <button class="btn-danger btn-small" onclick="deleteMachine(${m.id})">🗑️</button>
+                    <div class="machine-card-header">
+                        <div class="machine-card-title">
+                            <h3>${m.name}</h3>
+                            <div class="machine-card-info">Мощность: ${m.power} Вт</div>
+                            <div class="machine-card-stats">Параметров резки: ${totalParams}</div>
+                        </div>
+                        <div class="machine-card-buttons">
+                            <button class="btn-warning btn-small" onclick="openEditMachineModal(${m.id})">✏️</button>
+                            <button class="btn-danger btn-small" onclick="deleteMachine(${m.id})">🗑️</button>
+                        </div>
                     </div>
-                    <p style="color: var(--color-text-secondary); font-size: 0.85rem;">Мощность: ${m.power} Вт</p>
-                    <p style="color: var(--color-text-muted); font-size: 0.75rem;">Материалов: ${Object.keys(m.materials).length}</p>
                 `;
                 list.appendChild(card);
             });
         }
 
         function openAddMachineModal() {
+            editingMachineId = null;
+            document.getElementById('machineModalTitle').textContent = 'Новый станок';
+            document.getElementById('newMachineName').value = '';
+            document.getElementById('newMachinePower').value = '';
+            document.getElementById('addMachineModal').classList.add('active');
+        }
+
+        function openEditMachineModal(id) {
+            const machine = db.machines.find(m => m.id === id);
+            if (!machine) return;
+            
+            editingMachineId = id;
+            document.getElementById('machineModalTitle').textContent = 'Редактировать станок';
+            document.getElementById('newMachineName').value = machine.name;
+            document.getElementById('newMachinePower').value = machine.power;
             document.getElementById('addMachineModal').classList.add('active');
         }
 
@@ -865,7 +1006,7 @@
             document.getElementById(id).classList.remove('active');
         }
 
-        function addMachine() {
+        function saveMachine() {
             const name = document.getElementById('newMachineName').value.trim();
             const power = parseInt(document.getElementById('newMachinePower').value);
             
@@ -874,26 +1015,32 @@
                 return;
             }
 
-            const newMachine = {
-                id: Date.now(),
-                name,
-                power,
-                materials: {
-                    steel: [],
-                    stainless: [],
-                    aluminum: [],
-                    brass: []
-                }
-            };
+            if (editingMachineId) {
+                // Редактирование существующего станка
+                const machine = db.machines.find(m => m.id === editingMachineId);
+                machine.name = name;
+                machine.power = power;
+            } else {
+                // Добавление нового станка
+                const newMachine = {
+                    id: Date.now(),
+                    name,
+                    power,
+                    materials: {
+                        steel: [],
+                        stainless: [],
+                        aluminum: [],
+                        brass: []
+                    }
+                };
+                db.machines.push(newMachine);
+                db.currentMachine = newMachine.id;
+            }
 
-            db.machines.push(newMachine);
-            db.currentMachine = newMachine.id;
             saveDatabase();
             updateMachinesList();
             updateMachineSelectors();
             closeModal('addMachineModal');
-            document.getElementById('newMachineName').value = '';
-            document.getElementById('newMachinePower').value = '';
         }
 
         function deleteMachine(id) {
@@ -918,6 +1065,9 @@
                 return;
             }
 
+            db.currentMachine = machineId;
+            saveDatabase();
+
             document.getElementById('laser_material_card').style.display = 'block';
             document.getElementById('laser_table_card').style.display = 'block';
 
@@ -928,9 +1078,12 @@
             tbody.innerHTML = '';
 
             if (params.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 1rem; color: var(--color-text-muted);">Нет данных. Нажмите "+" для добавления</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 1rem; color: var(--color-text-muted);">Нет данных. Нажмите "Добавить толщину"</td></tr>';
                 return;
             }
+
+            // Сортировка по толщине
+            params.sort((a, b) => a.thickness - b.thickness);
 
             params.forEach((p, idx) => {
                 const row = document.createElement('tr');
@@ -946,9 +1099,62 @@
                     <td>${p.pressure}</td>
                     <td>${p.nozzle}</td>
                     <td style="color: ${focusColor}; font-weight: 600;">${focusSign}${p.focus}</td>
+                    <td style="color: var(--color-success);">${p.compOuter}</td>
+                    <td style="color: var(--color-warning);">${p.compInner}</td>
                 `;
                 tbody.appendChild(row);
             });
+        }
+
+        function openAddParamModal() {
+            const machineId = parseInt(document.getElementById('laser_machine').value);
+            if (!machineId) {
+                alert('Выберите станок');
+                return;
+            }
+
+            // Очистка формы
+            document.getElementById('new_thickness').value = '';
+            document.getElementById('new_speed').value = '';
+            document.getElementById('new_power').value = '';
+            document.getElementById('new_gas').value = '';
+            document.getElementById('new_pressure').value = '';
+            document.getElementById('new_nozzle').value = '';
+            document.getElementById('new_focus').value = '0';
+            document.getElementById('new_compOuter').value = '0.2';
+            document.getElementById('new_compInner').value = '0.2';
+
+            document.getElementById('addParamModal').classList.add('active');
+        }
+
+        function addNewParam() {
+            const machineId = parseInt(document.getElementById('laser_machine').value);
+            const material = document.getElementById('laser_material').value;
+            const machine = db.machines.find(m => m.id === machineId);
+
+            const newParam = {
+                thickness: parseFloat(document.getElementById('new_thickness').value),
+                speed: parseFloat(document.getElementById('new_speed').value),
+                power: parseFloat(document.getElementById('new_power').value),
+                gas: document.getElementById('new_gas').value,
+                pressure: parseFloat(document.getElementById('new_pressure').value),
+                nozzle: document.getElementById('new_nozzle').value,
+                focus: parseFloat(document.getElementById('new_focus').value),
+                compOuter: parseFloat(document.getElementById('new_compOuter').value),
+                compInner: parseFloat(document.getElementById('new_compInner').value)
+            };
+
+            if (isNaN(newParam.thickness) || isNaN(newParam.speed) || isNaN(newParam.power) || 
+                !newParam.gas || isNaN(newParam.pressure) || !newParam.nozzle || 
+                isNaN(newParam.focus) || isNaN(newParam.compOuter) || isNaN(newParam.compInner)) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            machine.materials[material].push(newParam);
+            saveDatabase();
+            updateLaserTable();
+            closeModal('addParamModal');
         }
 
         function openEditParamModal(machineId, material, idx) {
@@ -987,6 +1193,14 @@
                     <label>Фокус (мм)</label>
                     <input type="number" id="edit_focus" value="${param.focus}" step="0.1">
                 </div>
+                <div class="form-group">
+                    <label>Компенсация наружных кромок (мм)</label>
+                    <input type="number" id="edit_compOuter" value="${param.compOuter}" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Компенсация внутренних кромок (мм)</label>
+                    <input type="number" id="edit_compInner" value="${param.compInner}" step="0.01">
+                </div>
             `;
 
             document.getElementById('editParamModal').classList.add('active');
@@ -1003,11 +1217,14 @@
                 gas: document.getElementById('edit_gas').value,
                 pressure: parseFloat(document.getElementById('edit_pressure').value),
                 nozzle: document.getElementById('edit_nozzle').value,
-                focus: parseFloat(document.getElementById('edit_focus').value)
+                focus: parseFloat(document.getElementById('edit_focus').value),
+                compOuter: parseFloat(document.getElementById('edit_compOuter').value),
+                compInner: parseFloat(document.getElementById('edit_compInner').value)
             };
 
             saveDatabase();
             updateLaserTable();
+            updateMachinesList();
             closeModal('editParamModal');
             editingParam = null;
         }
@@ -1020,6 +1237,7 @@
 
             saveDatabase();
             updateLaserTable();
+            updateMachinesList();
             closeModal('editParamModal');
             editingParam = null;
         }
@@ -1150,3 +1368,5 @@
     </script>
 </body>
 </html>
+
+
