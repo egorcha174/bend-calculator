@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Калькулятор листогиба и лазерной резки">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+    <title>Гибка и Лазер</title>
+    <style>
+        :root {
+            --color-bg-primary: #0f172a;
+            --color-bg-secondary: #1e293b;
+            --color-bg-tertiary: #334155;
+            --color-text-primary: #f1f5f9;
+            --color-text-secondary: #cbd5e1;
+            --color-text-muted: #94a3b8;
+            --color-accent: #38bdf8;
+            --color-accent-hover: #0ea5e9;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef4444;
+            --color-border: rgba(148, 163, 184, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            padding: 10px;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: clamp(1.25rem, 5vw, 2rem);
+            margin-bottom: 1rem;
+            color: var(--color-accent);
+        }
+
+        .description {
+            color: var(--color-text-secondary);
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--color-bg-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--color-accent);
+            font-size: 0.9rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        .card {
+            background: var(--color-bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--color-text-primary);
+            border-bottom: 2px solid var(--color-accent);
+            padding-bottom: 0.4rem;
+        }
+
+        .form-group {
+            margin-bottom: 0.75rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.35rem;
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .label-with-unit {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .unit {
+            color: var(--color-text-muted);
+            font-size: 0.8rem;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 0.6rem 0.7rem;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text-primary);
+            font-size: 0.95rem;
+            transition: all 0.15s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--color-accent);
+            color: var(--color-bg-primary);
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-top: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--color-accent-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.btn-secondary {
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+        }
+
+        button.btn-danger {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        button.btn-success {
+            background: var(--color-success);
+            color: white;
+        }
+
+        button.btn-warning {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            margin-top: 0;
+            width: auto;
+        }
+
+        .results {
+            background: var(--color-bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            margin-top: 1rem;
+        }
+
+        .results h2 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--color-text-primary);
+            border-bottom: 2px solid var(--color-success);
+            padding-bottom: 0.4rem;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .result-item {
+            background: var(--color-bg-tertiary);
+            padding: 0.7rem;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+        }
+
+        .result-label {
+            color: var(--color-text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .result-value {
+            color: var(--color-accent);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .result-unit {
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+            margin-left: 0.15rem;
+        }
+
+        .formula-display {
+            background: var(--color-bg-tertiary);
+            padding: 0.7rem;
+            border-radius: 6px;
+            margin-top: 0.75rem;
+            border-left: 3px solid var(--color-warning);
+            font-family: 'Courier New', monospace;
+            color: var(--color-text-secondary);
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .info-box {
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid var(--color-accent);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .info-box h3 {
+            color: var(--color-accent);
+            font-size: 0.95rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .info-box p {
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--color-border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-button {
+            padding: 0.65rem 0.9rem;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tab-button.active {
+            color: var(--color-accent);
+            border-bottom-color: var(--color-accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fecaca;
+            padding: 0.7rem;
+            border-radius: 6px;
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        /* --- Laser table --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.75rem;
+        }
+
+        thead tr {
+            background: var(--color-bg-tertiary);
+            border-bottom: 2px solid var(--color-accent);
+        }
+
+        th {
+            padding: 0.5rem 0.25rem;
+            text-align: left;
+            color: var(--color-text-primary);
+            font-weight: 600;
+            font-size: 0.7rem;
+            line-height: 1.2;
+        }
+
+        td {
+            padding: 0.5rem 0.25rem;
+            color: var(--color-text-secondary);
+            border-bottom: 1px solid var(--color-border);
+            font-size: 0.75rem;
+        }
+
+        tbody tr:active {
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .editable-row {
+            cursor: pointer;
+        }
+
+        .editable-row:active {
+            background: rgba(56, 189, 248, 0.15);
+        }
+
+        @media (min-width: 768px) {
+            table {
+                font-size: 0.85rem;
+            }
+
+            th,
+            td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            th {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* --- Machine cards --- */
+        .machine-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            align-items: stretch;
+        }
+
+        .machine-selector select {
+            flex: 1;
+        }
+
+        .machine-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .machine-card {
+            background: var(--color-bg-tertiary);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--color-border);
+        }
+
+        .machine-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .machine-card-title {
+            flex: 1;
+        }
+
+        .machine-card-title h3 {
+            color: var(--color-accent);
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .machine-card-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .machine-card-info {
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .machine-card-stats {
+            color: var(--color-text-muted);
+            font-size: 0.75rem;
+        }
+
+        .add-param-button {
+            margin-top: 0.5rem;
+            background: var(--color-success);
+        }
+
+        .flex-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .flex-buttons button {
+            flex: 1;
+        }
+
+        /* --- Sample list --- */
+        .sample-item {
+            background: var(--color-bg-tertiary);
+            padding: 0.6rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+        }
+
+        .sample-item-data {
+            flex: 1;
+            color: var(--color-text-secondary);
+        }
+
+        .sample-item-data strong {
+            color: var(--color-accent);
+        }
+
+        .sample-item-num {
+            color: var(--color-text-muted);
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            min-width: 1.2rem;
+        }
+
+        .sample-delete {
+            background: none;
+            border: none;
+            color: var(--color-danger);
+            cursor: pointer;
+            padding: 0.2rem 0.4rem;
+            width: auto;
+            margin: 0;
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        .sample-delete:active {
+            opacity: 1;
+        }
+
+        .avg-row {
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid var(--color-accent);
+            padding: 0.6rem 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+
+        .avg-label {
+            color: var(--color-text-muted);
+            font-size: 0.75rem;
+        }
+
+        .avg-values {
+            color: var(--color-accent);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .avg-sigma {
+            color: var(--color-text-muted);
+            font-size: 0.78rem;
+            margin-top: 0.25rem;
+        }
+
+        /* --- Sync indicator --- */
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .sync-status.ok {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--color-success);
+        }
+
+        .sync-status.syncing {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--color-warning);
+        }
+
+        .sync-status.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--color-danger);
+        }
+
+        .sync-status.off {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--color-text-muted);
+        }
+
+        .sync-url-input {
+            font-family: monospace;
+            font-size: 0.8rem;
+            word-break: break-all;
+        }
+
+        .sync-instruction {
+            background: var(--color-bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: var(--color-text-secondary);
+            margin-top: 0.75rem;
+        }
+
+        .sync-instruction ol {
+            padding-left: 1.25rem;
+        }
+
+        .sync-instruction a {
+            color: var(--color-accent);
+        }
+
+        /* --- Modal --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--color-bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid var(--color-border);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--color-accent);
+        }
+
+        .modal-header h3 {
+            color: var(--color-accent);
+            font-size: 1.25rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--color-text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: auto;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔧 Гибка и Лазер</h1>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab(event, 'kfactor')">📊 K‑фактор</button>
+            <button class="tab-button" onclick="switchTab(event, 'backstop')">📐 Упор</button>
+            <button class="tab-button" onclick="switchTab(event, 'benders')">🔨 Листогибы</button>
+            <button class="tab-button" onclick="switchTab(event, 'laser')">⚡ Лазер</button>
+            <button class="tab-button" onclick="switchTab(event, 'machines')">🏭 Станки</button>
+            <button class="tab-button" onclick="switchTab(event, 'sync')">☁ Синхр.</button>
+        </div>
+
+        <!-- ===================== TAB 1: K-FACTOR (multi-sample) ===================== -->
+        <div id="kfactor-tab" class="tab-content active">
+            <div class="description">
+                Расчет <strong>K‑фактора</strong> по нескольким замерам. Введите общие параметры, добавьте замеры —
+                программа усреднит результаты.
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h2>📏 Общие параметры</h2>
+                    <div class="form-group">
+                        <div class="label-with-unit"><label for="thickness">Толщина (T)</label><span
+                                class="unit">мм</span></div>
+                        <input type="number" id="thickness" step="0.01" min="0.1" placeholder="3.0">
+                    </div>
+                    <div class="form-group">
+                        <div class="label-with-unit"><label for="innerRadius">Внутренний радиус (R)</label><span
+                                class="unit">мм</span></div>
+                        <input type="number" id="innerRadius" step="0.01" min="0" placeholder="1.5">
+                    </div>
+                    <div class="form-group">
+                        <div class="label-with-unit"><label for="bendAngle">Угол гиба (α)</label><span
+                                class="unit">°</span></div>
+                        <input type="number" id="bendAngle" step="0.1" min="1" max="179" value="90">
+                    </div>
+
+                    <h2 style="margin-top:1rem">📐 Замер</h2>
+                    <div class="form-group">
+                        <div class="label-with-unit"><label for="flange1">Полка 1 (B1, внешний)</label><span
+                                class="unit">мм</span></div>
+                        <input type="number" id="flange1" step="0.01" min="0" placeholder="50.0">
+                    </div>
+                    <div class="form-group">
+                        <div class="label-with-unit"><label for="flange2">Полка 2 (B2, внешний)</label><span
+                                class="unit">мм</span></div>
+                        <input type="number" id="flange2" step="0.01" min="0" placeholder="50.0">
+                    </div>
+                    <div class="form-group">
+                        <div class="label-with-unit"><label for="flatLength">Длина заготовки (развертка)</label><span
+                                class="unit">мм</span></div>
+                        <input type="number" id="flatLength" step="0.01" min="0" placeholder="97.0">
+                    </div>
+
+                    <button onclick="addSample()">➕ Добавить замер</button>
+                    <div id="kfError" class="error hidden"></div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Результаты замеров</h2>
+                    <div id="samplesList"></div>
+                    <div id="kfAvgBlock" class="hidden">
+                        <div class="avg-row">
+                            <div class="avg-label">Среднее значение</div>
+                            <div class="avg-values" id="avgValues"></div>
+                            <div class="avg-sigma" id="avgSigma"></div>
+                        </div>
+                        <div class="info-box" style="margin-top:0.75rem">
+                            <h3>Для Inventor</h3>
+                            <p>
+                                K‑factor = <span id="invK" style="color:var(--color-accent);">-</span><br>
+                                BA = <span id="invBA" style="color:var(--color-accent);">-</span> мм<br>
+                                BD = <span id="invBD" style="color:var(--color-accent);">-</span> мм
+                            </p>
+                        </div>
+                        <button class="btn-danger" style="margin-top:0.5rem" onclick="clearSamples()">🗑️ Очистить
+                            все</button>
+                    </div>
+                    <p id="noSamplesMsg"
+                        style="color:var(--color-text-muted);font-size:0.85rem;padding:1rem 0;text-align:center;">
+                        Добавьте замеры для расчета</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== TAB 2: BACKSTOP ===================== -->
+        <div id="backstop-tab" class="tab-content">
+            <div class="description">
+                Расчет <strong>расстояния до линии гиба (упора)</strong> по внешнему размеру полки и параметрам изгиба.
+                Упор всегда считается по формуле: <strong>X − BA/2</strong>.
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h2>⚙️ Параметры изгиба</h2>
+
+                    <div class="form-group">
+                        <label for="bs_mode">Режим расчета</label>
+                        <select id="bs_mode" onchange="onBsModeChange()">
+                            <option value="K">K‑factor → BA/BD</option>
+                            <option value="BA">BA (припуск на гиб)</option>
+                            <option value="BD">BD (вычет на гиб)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="label-with-unit">
+                            <label for="bs_thickness">Толщина (T)</label>
+                            <span class="unit">мм</span>
+                        </div>
+                        <input type="number" id="bs_thickness" step="0.01" min="0.1" placeholder="3.0">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="label-with-unit">
+                            <label for="bs_radius">Внутренний радиус (R)</label>
+                            <span class="unit">мм</span>
+                        </div>
+                        <input type="number" id="bs_radius" step="0.01" min="0" placeholder="1.5">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="label-with-unit">
+                            <label for="bs_angle">Угол гиба (α)</label>
+                            <span class="unit">°</span>
+                        </div>
+                        <input type="number" id="bs_angle" step="0.1" min="1" max="179" value="90">
+                    </div>
+
+                    <div class="form-group" id="bs_k_group">
+                        <div class="label-with-unit">
+                            <label for="bs_kfactor">K‑factor</label>
+                            <span class="unit">доля толщины</span>
+                        </div>
+                        <input type="number" id="bs_kfactor" step="0.01" min="0.2" max="0.8" placeholder="0.33">
+                    </div>
+
+                    <div class="form-group hidden" id="bs_ba_group">
+                        <div class="label-with-unit">
+                            <label for="bs_ba">BA — припуск на гиб</label>
+                            <span class="unit">мм</span>
+                        </div>
+                        <input type="number" id="bs_ba" step="0.01" min="0" placeholder="3.0">
+                    </div>
+
+                    <div class="form-group hidden" id="bs_bd_group">
+                        <div class="label-with-unit">
+                            <label for="bs_bd">BD — вычет на гиб</label>
+                            <span class="unit">мм</span>
+                        </div>
+                        <input type="number" id="bs_bd" step="0.01" min="0" placeholder="0.33">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📏 Полка и упор</h2>
+
+                    <div class="form-group">
+                        <div class="label-with-unit">
+                            <label for="bs_flangeOuter">Внешний размер полки (X)</label>
+                            <span class="unit">мм</span>
+                        </div>
+                        <input type="number" id="bs_flangeOuter" step="0.01" min="0" placeholder="25.0">
+                    </div>
+
+                    <button onclick="calculateBackstop()">🔬 Рассчитать упор</button>
+                    <div id="bsError" class="error hidden"></div>
+
+                    <div id="backstopResults" class="results hidden">
+                        <h2>📐 Результаты упора</h2>
+
+                        <div class="result-grid">
+                            <div class="result-item">
+                                <div class="result-label">До линии гиба (упор)</div>
+                                <div class="result-value" id="bs_backstop">
+                                    -<span class="result-unit">мм</span>
+                                </div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">BA (расчетная)</div>
+                                <div class="result-value" id="bs_resBA">
+                                    -<span class="result-unit">мм</span>
+                                </div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-label">BD (расчетная)</div>
+                                <div class="result-value" id="bs_resBD">
+                                    -<span class="result-unit">мм</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="formula-display" id="bs_formula"></div>
+
+                        <div class="info-box">
+                            <h3>Смысл результата</h3>
+                            <p id="bs_explain"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== TAB 3: LASER ===================== -->
+        <div id="laser-tab" class="tab-content">
+            <div class="description">
+                <strong>Параметры лазерной резки</strong> для выбранного станка.
+            </div>
+
+            <div class="card">
+                <h2>🏭 Станок</h2>
+                <div class="machine-selector">
+                    <select id="laser_machine" onchange="updateLaserTable()">
+                        <option value="">Выберите станок</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card" id="laser_material_card" style="display: none;">
+                <h2>⚙️ Материал</h2>
+                <div class="form-group">
+                    <select id="laser_material" onchange="updateLaserTable()">
+                        <option value="steel">Углеродистая сталь</option>
+                        <option value="stainless">Нержавеющая сталь</option>
+                        <option value="aluminum">Алюминий</option>
+                        <option value="brass">Латунь</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card" id="laser_table_card" style="display: none;">
+                <h2>📊 Параметры резки</h2>
+                <div style="overflow-x: auto;">
+                    <table id="laserTable">
+                        <thead>
+                            <tr>
+                                <th>Толщ.<br>(мм)</th>
+                                <th>Скор.<br>(м/мин)</th>
+                                <th>Мощ.<br>(Вт)</th>
+                                <th>Газ</th>
+                                <th>Давл.<br>(бар)</th>
+                                <th>Сопло</th>
+                                <th>Фокус<br>(мм)</th>
+                                <th>Комп.<br>наруж.<br>(мм)</th>
+                                <th>Комп.<br>внутр.<br>(мм)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laserTableBody"></tbody>
+                    </table>
+                </div>
+                <p style="color: var(--color-text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                    💡 Нажмите на строку для редактирования
+                </p>
+                <button class="add-param-button" onclick="openAddParamModal()">➕ Добавить толщину</button>
+            </div>
+        </div>
+
+        <!-- ===================== TAB: BENDERS ===================== -->
+        <div id="benders-tab" class="tab-content">
+            <div class="description">
+                <strong>База листогибов</strong> — станки, матрицы и поправки на гиб.
+            </div>
+
+            <div class="card">
+                <h2>🔨 Ваши листогибы</h2>
+                <div id="bendersList"></div>
+                <button onclick="openAddBenderModal()">➕ Добавить листогиб</button>
+            </div>
+
+            <div class="card" id="bender_entries_card" style="display:none;">
+                <h2>📋 Поправки на гиб</h2>
+                <div class="form-group">
+                    <label>Станок</label>
+                    <select id="bender_select" onchange="updateBenderEntries()"></select>
+                </div>
+                <div style="overflow-x:auto">
+                    <table id="benderTable">
+                        <thead>
+                            <tr>
+                                <th>Матрица<br>(V)</th>
+                                <th>Толщ.<br>(мм)</th>
+                                <th>Материал</th>
+                                <th>R<br>(мм)</th>
+                                <th>K</th>
+                                <th>BA<br>(мм)</th>
+                                <th>BD<br>(мм)</th>
+                                <th>Попр.<br>°/мм</th>
+                            </tr>
+                        </thead>
+                        <tbody id="benderTableBody"></tbody>
+                    </table>
+                </div>
+                <p style="color:var(--color-text-muted);font-size:0.8rem;margin-top:0.5rem">💡 Нажмите на строку для
+                    редактирования</p>
+                <button class="add-param-button" onclick="openAddBendEntryModal()">➕ Добавить запись</button>
+            </div>
+
+            <div class="card">
+                <h2>💾 Импорт/Экспорт</h2>
+                <div class="machine-controls">
+                    <button class="btn-secondary" onclick="exportBendDB()">📤 Экспорт</button>
+                    <button class="btn-secondary" onclick="document.getElementById('importBendFile').click()">📥
+                        Импорт</button>
+                    <input type="file" id="importBendFile" accept=".json" style="display:none"
+                        onchange="importBendDB(event)">
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== TAB 4: MACHINES ===================== -->
+        <div id="machines-tab" class="tab-content">
+            <div class="description">
+                <strong>База станков</strong> — добавляйте и редактируйте параметры ваших лазеров.
+            </div>
+
+            <div class="card">
+                <h2>🏭 Ваши станки</h2>
+                <div id="machinesList"></div>
+                <button onclick="openAddMachineModal()">➕ Добавить станок</button>
+            </div>
+
+            <div class="card">
+                <h2>💾 Импорт/Экспорт</h2>
+                <div class="machine-controls">
+                    <button class="btn-secondary" onclick="exportDatabase()">📤 Экспорт базы</button>
+                    <button class="btn-secondary" onclick="document.getElementById('importFile').click()">📥 Импорт
+                        базы</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;"
+                        onchange="importDatabase(event)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== TAB: SYNC ===================== -->
+    <div id="sync-tab" class="tab-content">
+        <div class="description">
+            <strong>Синхронизация</strong> — облачное хранение через Google Таблицу. Данные обновляются автоматически.
+        </div>
+
+        <div class="card">
+            <h2>☁ Статус</h2>
+            <div id="syncStatusBadge" class="sync-status off">⚪ Не настроено</div>
+            <div id="syncLastTime" style="color:var(--color-text-muted);font-size:0.8rem;"></div>
+        </div>
+
+        <div class="card">
+            <h2>🔗 URL Google Apps Script</h2>
+            <div class="form-group">
+                <label>Вставьте URL веб-приложения</label>
+                <input type="text" id="syncUrl" class="sync-url-input"
+                    placeholder="https://script.google.com/macros/s/.../exec" oninput="saveSyncSettings()">
+            </div>
+            <div class="form-group" style="display:flex;align-items:center;gap:0.5rem;">
+                <input type="checkbox" id="syncAutoEnabled" style="width:auto;" onchange="saveSyncSettings()" checked>
+                <label for="syncAutoEnabled" style="margin:0;font-size:0.9rem;">Авто-синхронизация при
+                    сохранении</label>
+            </div>
+            <div class="flex-buttons" style="margin-top:0.75rem">
+                <button class="btn-success" onclick="manualSyncUp()">⬆ В облако</button>
+                <button onclick="manualSyncDown()">⬇ Из облака</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Как настроить</h2>
+            <div class="sync-instruction">
+                <ol>
+                    <li>Откройте <a href="https://docs.google.com/spreadsheets" target="_blank">Google Таблицы</a> и
+                        создайте новую таблицу</li>
+                    <li>Меню → <strong>Расширения → Apps Script</strong></li>
+                    <li>Удалите всё и вставьте код из файла <strong>google-apps-script.js</strong></li>
+                    <li><strong>Развернуть → Новое развёртывание</strong><br>Тип: Веб-приложение<br>Доступ: Все</li>
+                    <li>Скопируйте URL и вставьте выше ↑</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== MODALS ===================== -->
+
+    <!-- Add/Edit Machine -->
+    <div id="addMachineModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="machineModalTitle">Новый станок</h3>
+                <button class="modal-close" onclick="closeModal('addMachineModal')">×</button>
+            </div>
+            <div class="form-group">
+                <label for="newMachineName">Название станка</label>
+                <input type="text" id="newMachineName" placeholder="Raycus 1.5 кВт #1">
+            </div>
+            <div class="form-group">
+                <label for="newMachinePower">Мощность (Вт)</label>
+                <input type="number" id="newMachinePower" placeholder="1500">
+            </div>
+            <div class="flex-buttons">
+                <button class="btn-secondary" onclick="closeModal('addMachineModal')">Отмена</button>
+                <button class="btn-success" onclick="saveMachine()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Param -->
+    <div id="editParamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Редактировать параметр</h3>
+                <button class="modal-close" onclick="closeModal('editParamModal')">×</button>
+            </div>
+            <div id="editParamForm"></div>
+            <div class="flex-buttons">
+                <button class="btn-danger" onclick="deleteParam()">🗑️ Удалить</button>
+                <button class="btn-secondary" onclick="closeModal('editParamModal')">Отмена</button>
+                <button class="btn-success" onclick="saveParam()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Param -->
+    <div id="addParamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить параметр резки</h3>
+                <button class="modal-close" onclick="closeModal('addParamModal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>Толщина (мм)</label>
+                <input type="number" id="new_thickness" step="0.1" placeholder="1.5">
+            </div>
+            <div class="form-group">
+                <label>Скорость (м/мин)</label>
+                <input type="number" id="new_speed" step="0.1" placeholder="15">
+            </div>
+            <div class="form-group">
+                <label>Мощность (Вт)</label>
+                <input type="number" id="new_power" placeholder="1500">
+            </div>
+            <div class="form-group">
+                <label>Газ</label>
+                <input type="text" id="new_gas" placeholder="N₂">
+            </div>
+            <div class="form-group">
+                <label>Давление (бар)</label>
+                <input type="number" id="new_pressure" step="0.1" placeholder="12">
+            </div>
+            <div class="form-group">
+                <label>Сопло (мм)</label>
+                <input type="text" id="new_nozzle" placeholder="1.5S">
+            </div>
+            <div class="form-group">
+                <label>Фокус (мм)</label>
+                <input type="number" id="new_focus" step="0.1" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Компенсация наружных кромок (мм)</label>
+                <input type="number" id="new_compOuter" step="0.01" value="0.2">
+            </div>
+            <div class="form-group">
+                <label>Компенсация внутренних кромок (мм)</label>
+                <input type="number" id="new_compInner" step="0.01" value="0.2">
+            </div>
+            <div class="flex-buttons">
+                <button class="btn-secondary" onclick="closeModal('addParamModal')">Отмена</button>
+                <button class="btn-success" onclick="addNewParam()">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Bender -->
+    <div id="addBenderModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="benderModalTitle">Новый листогиб</h3>
+                <button class="modal-close" onclick="closeModal('addBenderModal')">×</button>
+            </div>
+            <div class="form-group"><label>Название</label><input type="text" id="newBenderName"
+                    placeholder="Амада HG-1003"></div>
+            <div class="form-group"><label>Усилие (тонн)</label><input type="number" id="newBenderForce"
+                    placeholder="100"></div>
+            <div class="form-group"><label>Длина стола (мм)</label><input type="number" id="newBenderLength"
+                    placeholder="3100"></div>
+            <div class="form-group"><label>Комментарий</label><input type="text" id="newBenderComment" placeholder="">
+            </div>
+            <div class="flex-buttons">
+                <button class="btn-secondary" onclick="closeModal('addBenderModal')">Отмена</button>
+                <button class="btn-success" onclick="saveBender()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Bend Entry -->
+    <div id="addBendEntryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить запись</h3>
+                <button class="modal-close" onclick="closeModal('addBendEntryModal')">×</button>
+            </div>
+            <div class="form-group"><label>Матрица (V, мм)</label><input type="text" id="newBE_die" placeholder="V16">
+            </div>
+            <div class="form-group"><label>Толщина (мм)</label><input type="number" id="newBE_thickness" step="0.1"
+                    placeholder="2.0"></div>
+            <div class="form-group"><label>Материал</label><input type="text" id="newBE_material" placeholder="Сталь">
+            </div>
+            <div class="form-group"><label>R внутренний (мм)</label><input type="number" id="newBE_radius" step="0.01"
+                    placeholder="1.5"></div>
+            <div class="form-group"><label>K-factor</label><input type="number" id="newBE_k" step="0.0001"
+                    placeholder="0.33"></div>
+            <div class="form-group"><label>BA (мм)</label><input type="number" id="newBE_ba" step="0.001"
+                    placeholder="3.14"></div>
+            <div class="form-group"><label>BD (мм)</label><input type="number" id="newBE_bd" step="0.001"
+                    placeholder="1.86"></div>
+            <div class="form-group"><label>Поправка (°/мм)</label><input type="number" id="newBE_corr" step="0.01"
+                    value="0" placeholder="-0.05"></div>
+            <div class="form-group"><label>Комментарий</label><input type="text" id="newBE_comment" placeholder="">
+            </div>
+            <div class="flex-buttons">
+                <button class="btn-secondary" onclick="closeModal('addBendEntryModal')">Отмена</button>
+                <button class="btn-success" onclick="addBendEntry()">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Bend Entry -->
+    <div id="editBendEntryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Редактировать запись</h3>
+                <button class="modal-close" onclick="closeModal('editBendEntryModal')">×</button>
+            </div>
+            <div id="editBendEntryForm"></div>
+            <div class="flex-buttons">
+                <button class="btn-danger" onclick="deleteBendEntry()">🗑️ Удалить</button>
+                <button class="btn-secondary" onclick="closeModal('editBendEntryModal')">Отмена</button>
+                <button class="btn-success" onclick="saveBendEntry()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== Service Worker ==========
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(e => console.log('SW error:', e));
+        }
+
+        // ========== Tab switching ==========
+        function switchTab(evt, tabId) {
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            evt.currentTarget.classList.add('active');
+            document.getElementById(tabId + '-tab').classList.add('active');
+        }
+
+        // ========== Math helpers (from index.html) ==========
+
+        function calcBAFromK({ R, T, angleDeg, K }) {
+            // BA = π * (R + K*T) * α / 180
+            return Math.PI * (R + K * T) * (angleDeg / 180);
+        }
+
+        function calcOSSB({ R, T, angleDeg }) {
+            const angleRad = angleDeg * Math.PI / 180;
+            return Math.tan(angleRad / 2) * (R + T);
+        }
+
+        function calcBDFromBA({ BA, R, T, angleDeg }) {
+            const OSSB = calcOSSB({ R, T, angleDeg });
+            return 2 * OSSB - BA;
+        }
+
+        function calcBAFromBD({ BD, R, T, angleDeg }) {
+            const OSSB = calcOSSB({ R, T, angleDeg });
+            return 2 * OSSB - BD;
+        }
+
+        // ========== TAB 1: K-factor multi-sample ==========
+
+        let samples = [];
+
+        function addSample() {
+            const T = parseFloat(document.getElementById('thickness').value);
+            const R = parseFloat(document.getElementById('innerRadius').value);
+            const angle = parseFloat(document.getElementById('bendAngle').value);
+            const B1 = parseFloat(document.getElementById('flange1').value);
+            const B2 = parseFloat(document.getElementById('flange2').value);
+            const flat = parseFloat(document.getElementById('flatLength').value);
+
+            const err = document.getElementById('kfError');
+            err.classList.add('hidden');
+
+            if ([T, R, angle].some(v => isNaN(v))) {
+                err.textContent = 'Заполните толщину, радиус и угол.';
+                err.classList.remove('hidden');
+                return;
+            }
+            if ([B1, B2, flat].some(v => isNaN(v))) {
+                err.textContent = 'Заполните B1, B2 и длину заготовки.';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            const BD = (B1 + B2) - flat;
+            const OSSB = calcOSSB({ R, T, angleDeg: angle });
+            const BA = 2 * OSSB - BD;
+            const K = ((BA * 180 / (Math.PI * angle)) - R) / T;
+
+            samples.push({ B1, B2, flat, K, BA, BD, T, R, angle });
+            document.getElementById('flange1').value = '';
+            document.getElementById('flange2').value = '';
+            document.getElementById('flatLength').value = '';
+            renderSamples();
+        }
+
+        function removeSample(idx) {
+            samples.splice(idx, 1);
+            renderSamples();
+        }
+
+        function clearSamples() {
+            samples = [];
+            renderSamples();
+        }
+
+        function renderSamples() {
+            const list = document.getElementById('samplesList');
+            const avgBlock = document.getElementById('kfAvgBlock');
+            const noMsg = document.getElementById('noSamplesMsg');
+            list.innerHTML = '';
+
+            if (samples.length === 0) {
+                avgBlock.classList.add('hidden');
+                noMsg.style.display = '';
+                return;
+            }
+            noMsg.style.display = 'none';
+
+            samples.forEach((s, i) => {
+                const div = document.createElement('div');
+                div.className = 'sample-item';
+                div.innerHTML = `
+                <span class="sample-item-num">#${i + 1}</span>
+                <span class="sample-item-data">
+                    K=<strong>${s.K.toFixed(4)}</strong>
+                    BA=<strong>${s.BA.toFixed(3)}</strong>
+                    BD=<strong>${s.BD.toFixed(3)}</strong>
+                    <span style="color:var(--color-text-muted);font-size:0.75rem"> B1=${s.B1} B2=${s.B2} L=${s.flat}</span>
+                </span>
+                <button class="sample-delete" onclick="removeSample(${i})">✕</button>
+            `;
+                list.appendChild(div);
+            });
+
+            // averages
+            const n = samples.length;
+            const avgK = samples.reduce((s, x) => s + x.K, 0) / n;
+            const avgBA = samples.reduce((s, x) => s + x.BA, 0) / n;
+            const avgBD = samples.reduce((s, x) => s + x.BD, 0) / n;
+
+            let sigmaK = 0;
+            if (n > 1) {
+                const variance = samples.reduce((s, x) => s + (x.K - avgK) ** 2, 0) / (n - 1);
+                sigmaK = Math.sqrt(variance);
+            }
+
+            document.getElementById('avgValues').innerHTML =
+                `K = <strong>${avgK.toFixed(4)}</strong> &nbsp; BA = <strong>${avgBA.toFixed(3)}</strong> мм &nbsp; BD = <strong>${avgBD.toFixed(3)}</strong> мм`;
+            document.getElementById('avgSigma').textContent =
+                n > 1 ? `σ(K) = ${sigmaK.toFixed(4)} (${n} замеров)` : `1 замер`;
+
+            document.getElementById('invK').textContent = avgK.toFixed(4);
+            document.getElementById('invBA').textContent = avgBA.toFixed(3);
+            document.getElementById('invBD').textContent = avgBD.toFixed(3);
+
+            avgBlock.classList.remove('hidden');
+        }
+
+        // ========== TAB 2: Backstop GUI ==========
+
+        function onBsModeChange() {
+            const mode = document.getElementById('bs_mode').value;
+            const kGroup = document.getElementById('bs_k_group');
+            const baGroup = document.getElementById('bs_ba_group');
+            const bdGroup = document.getElementById('bs_bd_group');
+
+            kGroup.classList.add('hidden');
+            baGroup.classList.add('hidden');
+            bdGroup.classList.add('hidden');
+
+            if (mode === 'K') {
+                kGroup.classList.remove('hidden');
+            } else if (mode === 'BA') {
+                baGroup.classList.remove('hidden');
+            } else if (mode === 'BD') {
+                bdGroup.classList.remove('hidden');
+            }
+        }
+
+        function calculateBackstop() {
+            const mode = document.getElementById('bs_mode').value;
+            const T = parseFloat(document.getElementById('bs_thickness').value);
+            const R = parseFloat(document.getElementById('bs_radius').value);
+            const angle = parseFloat(document.getElementById('bs_angle').value);
+            const X = parseFloat(document.getElementById('bs_flangeOuter').value);
+
+            const err = document.getElementById('bsError');
+            err.classList.add('hidden');
+
+            if ([T, R, angle, X].some(v => isNaN(v))) {
+                err.textContent = 'Заполните толщину, радиус, угол и размер полки.';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            let BA, BD;
+            if (mode === 'K') {
+                const K = parseFloat(document.getElementById('bs_kfactor').value);
+                if (isNaN(K)) {
+                    err.textContent = 'Укажите K‑factor.';
+                    err.classList.remove('hidden');
+                    return;
+                }
+                BA = calcBAFromK({ R, T, angleDeg: angle, K });
+                BD = calcBDFromBA({ BA, R, T, angleDeg: angle });
+            } else if (mode === 'BA') {
+                BA = parseFloat(document.getElementById('bs_ba').value);
+                if (isNaN(BA)) {
+                    err.textContent = 'Укажите BA — припуск на гиб.';
+                    err.classList.remove('hidden');
+                    return;
+                }
+                BD = calcBDFromBA({ BA, R, T, angleDeg: angle });
+            } else if (mode === 'BD') {
+                BD = parseFloat(document.getElementById('bs_bd').value);
+                if (isNaN(BD)) {
+                    err.textContent = 'Укажите BD — вычет на гиб.';
+                    err.classList.remove('hidden');
+                    return;
+                }
+                BA = calcBAFromBD({ BD, R, T, angleDeg: angle });
+            }
+
+            // key formula: distance to bend line
+            const backstop = X - BA / 2;
+
+            document.getElementById('bs_backstop').innerHTML =
+                backstop.toFixed(3) + '<span class="result-unit">мм</span>';
+            document.getElementById('bs_resBA').innerHTML =
+                BA.toFixed(3) + '<span class="result-unit">мм</span>';
+            document.getElementById('bs_resBD').innerHTML =
+                BD.toFixed(3) + '<span class="result-unit">мм</span>';
+
+            const baseText =
+                `Упор считается от внешнего размера полки X.
+
+Формула:
+Lᵦ = X − BA/2
+Lᵦ = ${X.toFixed(3)} − ${BA.toFixed(3)}/2 = ${backstop.toFixed(3)} мм.
+
+BA уже учитывает толщину T = ${T.toFixed(3)} мм,
+радиус R = ${R.toFixed(3)} мм и угол α = ${angle.toFixed(2)}°.`;
+
+            document.getElementById('bs_formula').textContent = baseText;
+
+            let modeText = '';
+            if (mode === 'K') {
+                const K = parseFloat(document.getElementById('bs_kfactor').value);
+                modeText =
+                    `Режим K‑factor: BA получен из K = ${K.toFixed(4)} по формуле ` +
+                    `BA = π·(R + K·T)·α/180, затем BD = 2·OSSB − BA.`;
+            } else if (mode === 'BA') {
+                modeText =
+                    'Режим BA: BA введен вручную из таблицы/эксперимента, BD пересчитан через OSSB.';
+            } else {
+                modeText =
+                    'Режим BD: BD введен вручную, BA вычислен назад через OSSB.';
+            }
+            document.getElementById('bs_explain').textContent = modeText;
+
+            document.getElementById('backstopResults').classList.remove('hidden');
+        }
+
+        // ========== TAB 3 & 4: Laser DB ==========
+
+        let db = { machines: [], currentMachine: null };
+        let editingParam = null;
+        let editingMachineId = null;
+
+        function loadDatabase() {
+            const stored = localStorage.getItem('laserDB');
+            if (stored) {
+                db = JSON.parse(stored);
+                db.machines.forEach(machine => {
+                    Object.keys(machine.materials).forEach(material => {
+                        machine.materials[material].forEach(param => {
+                            if (param.compOuter === undefined) param.compOuter = 0.2;
+                            if (param.compInner === undefined) param.compInner = 0.2;
+                        });
+                    });
+                });
+                saveDatabase();
+            } else {
+                db.machines = [{
+                    id: Date.now(),
+                    name: 'Raycus 1.5 кВт',
+                    power: 1500,
+                    materials: {
+                        steel: [
+                            { thickness: 1, speed: 20, power: 1500, gas: 'N₂/Air', pressure: 10, nozzle: '1.5S', focus: 0, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 2, speed: 5, power: 1500, gas: 'O₂', pressure: 2, nozzle: '1.2D', focus: 3, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 3, speed: 3.6, power: 1500, gas: 'O₂', pressure: 0.6, nozzle: '1.2D', focus: 3, compOuter: 0.2, compInner: 0.2 }
+                        ],
+                        stainless: [
+                            { thickness: 1, speed: 20, power: 1500, gas: 'N₂', pressure: 10, nozzle: '1.5S', focus: 0, compOuter: 0.2, compInner: 0.2 },
+                            { thickness: 2, speed: 7, power: 1500, gas: 'N₂', pressure: 12, nozzle: '2.0S', focus: -1, compOuter: 0.2, compInner: 0.2 }
+                        ],
+                        aluminum: [
+                            { thickness: 1, speed: 18, power: 1500, gas: 'N₂', pressure: 12, nozzle: '1.5S', focus: 0, compOuter: 0.2, compInner: 0.2 }
+                        ],
+                        brass: [
+                            { thickness: 1, speed: 15, power: 1500, gas: 'N₂', pressure: 12, nozzle: '1.5S', focus: 0, compOuter: 0.2, compInner: 0.2 }
+                        ]
+                    }
+                }];
+                db.currentMachine = db.machines[0].id;
+                saveDatabase();
+            }
+            updateMachinesList();
+            updateMachineSelectors();
+        }
+
+        function saveDatabase() {
+            localStorage.setItem('laserDB', JSON.stringify(db));
+        }
+
+        function updateMachineSelectors() {
+            const select = document.getElementById('laser_machine');
+            select.innerHTML = '<option value="">Выберите станок</option>';
+            db.machines.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                if (m.id === db.currentMachine) opt.selected = true;
+                select.appendChild(opt);
+            });
+            updateLaserTable();
+        }
+
+        function updateMachinesList() {
+            const list = document.getElementById('machinesList');
+            list.innerHTML = '';
+            db.machines.forEach(m => {
+                const totalParams = Object.values(m.materials).reduce((sum, arr) => sum + arr.length, 0);
+                const card = document.createElement('div');
+                card.className = 'machine-card';
+                card.innerHTML = `
+                <div class="machine-card-header">
+                    <div class="machine-card-title">
+                        <h3>${m.name}</h3>
+                        <div class="machine-card-info">Мощность: ${m.power} Вт</div>
+                        <div class="machine-card-stats">Параметров резки: ${totalParams}</div>
+                    </div>
+                    <div class="machine-card-buttons">
+                        <button class="btn-warning btn-small" onclick="openEditMachineModal(${m.id})">✏️</button>
+                        <button class="btn-danger btn-small" onclick="deleteMachine(${m.id})">🗑️</button>
+                    </div>
+                </div>
+            `;
+                list.appendChild(card);
+            });
+        }
+
+        function updateLaserTable() {
+            const machineId = parseInt(document.getElementById('laser_machine').value);
+            const material = document.getElementById('laser_material').value;
+            const tbody = document.getElementById('laserTableBody');
+
+            if (!machineId) {
+                document.getElementById('laser_material_card').style.display = 'none';
+                document.getElementById('laser_table_card').style.display = 'none';
+                return;
+            }
+
+            db.currentMachine = machineId;
+            saveDatabase();
+
+            document.getElementById('laser_material_card').style.display = 'block';
+            document.getElementById('laser_table_card').style.display = 'block';
+
+            const machine = db.machines.find(m => m.id === machineId);
+            if (!machine) return;
+
+            const params = machine.materials[material] || [];
+            tbody.innerHTML = '';
+
+            if (params.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 1rem; color: var(--color-text-muted);">Нет данных. Нажмите "Добавить толщину"</td></tr>';
+                return;
+            }
+
+            params.sort((a, b) => a.thickness - b.thickness);
+
+            params.forEach((p, idx) => {
+                const row = document.createElement('tr');
+                row.className = 'editable-row';
+                row.onclick = () => openEditParamModal(machineId, material, idx);
+                const focusSign = p.focus > 0 ? '+' : '';
+                const focusColor = p.focus > 0 ? 'var(--color-success)' : p.focus < 0 ? 'var(--color-warning)' : 'var(--color-text-secondary)';
+                row.innerHTML = `
+                <td style="font-weight: 600;">${p.thickness}</td>
+                <td>${p.speed}</td>
+                <td>${p.power}</td>
+                <td>${p.gas}</td>
+                <td>${p.pressure}</td>
+                <td>${p.nozzle}</td>
+                <td style="color: ${focusColor}; font-weight: 600;">${focusSign}${p.focus}</td>
+                <td style="color: var(--color-success);">${p.compOuter}</td>
+                <td style="color: var(--color-warning);">${p.compInner}</td>
+            `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // ========== Machine CRUD ==========
+
+        function openAddMachineModal() {
+            editingMachineId = null;
+            document.getElementById('machineModalTitle').textContent = 'Новый станок';
+            document.getElementById('newMachineName').value = '';
+            document.getElementById('newMachinePower').value = '';
+            document.getElementById('addMachineModal').classList.add('active');
+        }
+
+        function openEditMachineModal(id) {
+            const machine = db.machines.find(m => m.id === id);
+            if (!machine) return;
+            editingMachineId = id;
+            document.getElementById('machineModalTitle').textContent = 'Редактировать станок';
+            document.getElementById('newMachineName').value = machine.name;
+            document.getElementById('newMachinePower').value = machine.power;
+            document.getElementById('addMachineModal').classList.add('active');
+        }
+
+        function saveMachine() {
+            const name = document.getElementById('newMachineName').value.trim();
+            const power = parseInt(document.getElementById('newMachinePower').value);
+
+            if (!name || !power) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            if (editingMachineId) {
+                const machine = db.machines.find(m => m.id === editingMachineId);
+                machine.name = name;
+                machine.power = power;
+            } else {
+                const newMachine = {
+                    id: Date.now(),
+                    name,
+                    power,
+                    materials: { steel: [], stainless: [], aluminum: [], brass: [] }
+                };
+                db.machines.push(newMachine);
+                db.currentMachine = newMachine.id;
+            }
+
+            saveDatabase();
+            updateMachinesList();
+            updateMachineSelectors();
+            closeModal('addMachineModal');
+        }
+
+        function deleteMachine(id) {
+            if (!confirm('Удалить станок?')) return;
+            db.machines = db.machines.filter(m => m.id !== id);
+            if (db.currentMachine === id) {
+                db.currentMachine = db.machines.length > 0 ? db.machines[0].id : null;
+            }
+            saveDatabase();
+            updateMachinesList();
+            updateMachineSelectors();
+        }
+
+        // ========== Param CRUD ==========
+
+        function openAddParamModal() {
+            const machineId = parseInt(document.getElementById('laser_machine').value);
+            if (!machineId) {
+                alert('Выберите станок');
+                return;
+            }
+            document.getElementById('new_thickness').value = '';
+            document.getElementById('new_speed').value = '';
+            document.getElementById('new_power').value = '';
+            document.getElementById('new_gas').value = '';
+            document.getElementById('new_pressure').value = '';
+            document.getElementById('new_nozzle').value = '';
+            document.getElementById('new_focus').value = '0';
+            document.getElementById('new_compOuter').value = '0.2';
+            document.getElementById('new_compInner').value = '0.2';
+            document.getElementById('addParamModal').classList.add('active');
+        }
+
+        function addNewParam() {
+            const machineId = parseInt(document.getElementById('laser_machine').value);
+            const material = document.getElementById('laser_material').value;
+            const machine = db.machines.find(m => m.id === machineId);
+
+            const newParam = {
+                thickness: parseFloat(document.getElementById('new_thickness').value),
+                speed: parseFloat(document.getElementById('new_speed').value),
+                power: parseFloat(document.getElementById('new_power').value),
+                gas: document.getElementById('new_gas').value,
+                pressure: parseFloat(document.getElementById('new_pressure').value),
+                nozzle: document.getElementById('new_nozzle').value,
+                focus: parseFloat(document.getElementById('new_focus').value),
+                compOuter: parseFloat(document.getElementById('new_compOuter').value),
+                compInner: parseFloat(document.getElementById('new_compInner').value)
+            };
+
+            if (isNaN(newParam.thickness) || isNaN(newParam.speed) || isNaN(newParam.power) ||
+                !newParam.gas || isNaN(newParam.pressure) || !newParam.nozzle ||
+                isNaN(newParam.focus) || isNaN(newParam.compOuter) || isNaN(newParam.compInner)) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            machine.materials[material].push(newParam);
+            saveDatabase();
+            updateLaserTable();
+            closeModal('addParamModal');
+        }
+
+        function openEditParamModal(machineId, material, idx) {
+            const machine = db.machines.find(m => m.id === machineId);
+            const param = machine.materials[material][idx];
+            editingParam = { machineId, material, idx };
+
+            const form = document.getElementById('editParamForm');
+            form.innerHTML = `
+            <div class="form-group">
+                <label>Толщина (мм)</label>
+                <input type="number" id="edit_thickness" value="${param.thickness}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Скорость (м/мин)</label>
+                <input type="number" id="edit_speed" value="${param.speed}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Мощность (Вт)</label>
+                <input type="number" id="edit_power" value="${param.power}">
+            </div>
+            <div class="form-group">
+                <label>Газ</label>
+                <input type="text" id="edit_gas" value="${param.gas}">
+            </div>
+            <div class="form-group">
+                <label>Давление (бар)</label>
+                <input type="number" id="edit_pressure" value="${param.pressure}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Сопло (мм)</label>
+                <input type="text" id="edit_nozzle" value="${param.nozzle}">
+            </div>
+            <div class="form-group">
+                <label>Фокус (мм)</label>
+                <input type="number" id="edit_focus" value="${param.focus}" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Компенсация наружных кромок (мм)</label>
+                <input type="number" id="edit_compOuter" value="${param.compOuter}" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Компенсация внутренних кромок (мм)</label>
+                <input type="number" id="edit_compInner" value="${param.compInner}" step="0.01">
+            </div>
+        `;
+            document.getElementById('editParamModal').classList.add('active');
+        }
+
+        function saveParam() {
+            if (!editingParam) return;
+            const machine = db.machines.find(m => m.id === editingParam.machineId);
+            machine.materials[editingParam.material][editingParam.idx] = {
+                thickness: parseFloat(document.getElementById('edit_thickness').value),
+                speed: parseFloat(document.getElementById('edit_speed').value),
+                power: parseFloat(document.getElementById('edit_power').value),
+                gas: document.getElementById('edit_gas').value,
+                pressure: parseFloat(document.getElementById('edit_pressure').value),
+                nozzle: document.getElementById('edit_nozzle').value,
+                focus: parseFloat(document.getElementById('edit_focus').value),
+                compOuter: parseFloat(document.getElementById('edit_compOuter').value),
+                compInner: parseFloat(document.getElementById('edit_compInner').value)
+            };
+            saveDatabase();
+            updateLaserTable();
+            updateMachinesList();
+            closeModal('editParamModal');
+            editingParam = null;
+        }
+
+        function deleteParam() {
+            if (!editingParam || !confirm('Удалить параметр?')) return;
+            const machine = db.machines.find(m => m.id === editingParam.machineId);
+            machine.materials[editingParam.material].splice(editingParam.idx, 1);
+            saveDatabase();
+            updateLaserTable();
+            updateMachinesList();
+            closeModal('editParamModal');
+            editingParam = null;
+        }
+
+        // ========== Import / Export ==========
+
+        function exportDatabase() {
+            const json = JSON.stringify(db, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `laser-db-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importDatabase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm('Импортировать базу? Текущие данные будут заменены.')) {
+                        db = imported;
+                        saveDatabase();
+                        updateMachinesList();
+                        updateMachineSelectors();
+                        alert('База импортирована!');
+                    }
+                } catch (err) {
+                    alert('Ошибка импорта: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ========== Modal helpers ==========
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // ========== BENDERS DB ==========
+
+        let bendDB = { benders: [], currentBender: null };
+        let editingBendEntry = null;
+        let editingBenderId = null;
+
+        function loadBendDB() {
+            const stored = localStorage.getItem('bendDB');
+            if (stored) {
+                bendDB = JSON.parse(stored);
+            }
+            updateBendersList();
+            updateBenderSelectors();
+        }
+
+        function saveBendDB() {
+            localStorage.setItem('bendDB', JSON.stringify(bendDB));
+        }
+
+        function updateBendersList() {
+            const list = document.getElementById('bendersList');
+            list.innerHTML = '';
+            bendDB.benders.forEach(b => {
+                const cnt = (b.entries || []).length;
+                const card = document.createElement('div');
+                card.className = 'machine-card';
+                card.innerHTML = `
+                    <div class="machine-card-header">
+                        <div class="machine-card-title">
+                            <h3>${b.name}</h3>
+                            <div class="machine-card-info">${b.force ? b.force + ' т' : ''} ${b.tableLength ? '/ ' + b.tableLength + ' мм' : ''}</div>
+                            <div class="machine-card-stats">Записей: ${cnt}${b.comment ? ' · ' + b.comment : ''}</div>
+                        </div>
+                        <div class="machine-card-buttons">
+                            <button class="btn-warning btn-small" onclick="openEditBenderModal(${b.id})">✏️</button>
+                            <button class="btn-danger btn-small" onclick="deleteBender(${b.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function updateBenderSelectors() {
+            const sel = document.getElementById('bender_select');
+            sel.innerHTML = '<option value="">Выберите листогиб</option>';
+            bendDB.benders.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.name;
+                if (b.id === bendDB.currentBender) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            if (bendDB.benders.length > 0) {
+                document.getElementById('bender_entries_card').style.display = 'block';
+            } else {
+                document.getElementById('bender_entries_card').style.display = 'none';
+            }
+            updateBenderEntries();
+        }
+
+        function updateBenderEntries() {
+            const benderId = parseInt(document.getElementById('bender_select').value);
+            const tbody = document.getElementById('benderTableBody');
+            if (!benderId) { tbody.innerHTML = ''; return; }
+            bendDB.currentBender = benderId;
+            saveBendDB();
+            const bender = bendDB.benders.find(b => b.id === benderId);
+            if (!bender) return;
+            const entries = bender.entries || [];
+            tbody.innerHTML = '';
+            if (entries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:1rem;color:var(--color-text-muted)">Нет записей</td></tr>';
+                return;
+            }
+            entries.forEach((e, idx) => {
+                const row = document.createElement('tr');
+                row.className = 'editable-row';
+                row.onclick = () => openEditBendEntryModal(benderId, idx);
+                row.innerHTML = `
+                    <td style="font-weight:600">${e.die}</td>
+                    <td>${e.thickness}</td>
+                    <td>${e.material}</td>
+                    <td>${e.radius}</td>
+                    <td style="color:var(--color-accent);font-weight:600">${e.k}</td>
+                    <td>${e.ba}</td>
+                    <td>${e.bd}</td>
+                    <td style="color:${e.corr < 0 ? 'var(--color-warning)' : e.corr > 0 ? 'var(--color-success)' : 'var(--color-text-secondary)'}">${e.corr}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function openAddBenderModal() {
+            editingBenderId = null;
+            document.getElementById('benderModalTitle').textContent = 'Новый листогиб';
+            document.getElementById('newBenderName').value = '';
+            document.getElementById('newBenderForce').value = '';
+            document.getElementById('newBenderLength').value = '';
+            document.getElementById('newBenderComment').value = '';
+            document.getElementById('addBenderModal').classList.add('active');
+        }
+
+        function openEditBenderModal(id) {
+            const b = bendDB.benders.find(x => x.id === id);
+            if (!b) return;
+            editingBenderId = id;
+            document.getElementById('benderModalTitle').textContent = 'Редактировать';
+            document.getElementById('newBenderName').value = b.name;
+            document.getElementById('newBenderForce').value = b.force || '';
+            document.getElementById('newBenderLength').value = b.tableLength || '';
+            document.getElementById('newBenderComment').value = b.comment || '';
+            document.getElementById('addBenderModal').classList.add('active');
+        }
+
+        function saveBender() {
+            const name = document.getElementById('newBenderName').value.trim();
+            if (!name) { alert('Введите название'); return; }
+            const force = parseInt(document.getElementById('newBenderForce').value) || 0;
+            const tableLength = parseInt(document.getElementById('newBenderLength').value) || 0;
+            const comment = document.getElementById('newBenderComment').value.trim();
+
+            if (editingBenderId) {
+                const b = bendDB.benders.find(x => x.id === editingBenderId);
+                b.name = name; b.force = force; b.tableLength = tableLength; b.comment = comment;
+            } else {
+                bendDB.benders.push({ id: Date.now(), name, force, tableLength, comment, entries: [] });
+                bendDB.currentBender = bendDB.benders[bendDB.benders.length - 1].id;
+            }
+            saveBendDB(); updateBendersList(); updateBenderSelectors();
+            closeModal('addBenderModal');
+        }
+
+        function deleteBender(id) {
+            if (!confirm('Удалить листогиб?')) return;
+            bendDB.benders = bendDB.benders.filter(b => b.id !== id);
+            if (bendDB.currentBender === id) bendDB.currentBender = bendDB.benders.length > 0 ? bendDB.benders[0].id : null;
+            saveBendDB(); updateBendersList(); updateBenderSelectors();
+        }
+
+        function openAddBendEntryModal() {
+            const benderId = parseInt(document.getElementById('bender_select').value);
+            if (!benderId) { alert('Выберите листогиб'); return; }
+            ['newBE_die', 'newBE_material', 'newBE_comment'].forEach(id => document.getElementById(id).value = '');
+            ['newBE_thickness', 'newBE_radius', 'newBE_k', 'newBE_ba', 'newBE_bd'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('newBE_corr').value = '0';
+            document.getElementById('addBendEntryModal').classList.add('active');
+        }
+
+        function addBendEntry() {
+            const benderId = parseInt(document.getElementById('bender_select').value);
+            const bender = bendDB.benders.find(b => b.id === benderId);
+            const entry = {
+                die: document.getElementById('newBE_die').value.trim(),
+                thickness: parseFloat(document.getElementById('newBE_thickness').value),
+                material: document.getElementById('newBE_material').value.trim(),
+                radius: parseFloat(document.getElementById('newBE_radius').value),
+                k: parseFloat(document.getElementById('newBE_k').value),
+                ba: parseFloat(document.getElementById('newBE_ba').value),
+                bd: parseFloat(document.getElementById('newBE_bd').value),
+                corr: parseFloat(document.getElementById('newBE_corr').value) || 0,
+                comment: document.getElementById('newBE_comment').value.trim()
+            };
+            if (!entry.die || isNaN(entry.thickness)) { alert('Заполните матрицу и толщину'); return; }
+            if (!bender.entries) bender.entries = [];
+            bender.entries.push(entry);
+            saveBendDB(); updateBenderEntries(); updateBendersList();
+            closeModal('addBendEntryModal');
+        }
+
+        function openEditBendEntryModal(benderId, idx) {
+            const bender = bendDB.benders.find(b => b.id === benderId);
+            const e = bender.entries[idx];
+            editingBendEntry = { benderId, idx };
+            const form = document.getElementById('editBendEntryForm');
+            form.innerHTML = `
+                <div class="form-group"><label>Матрица (V)</label><input type="text" id="editBE_die" value="${e.die}"></div>
+                <div class="form-group"><label>Толщина (мм)</label><input type="number" id="editBE_thickness" value="${e.thickness}" step="0.1"></div>
+                <div class="form-group"><label>Материал</label><input type="text" id="editBE_material" value="${e.material}"></div>
+                <div class="form-group"><label>R (мм)</label><input type="number" id="editBE_radius" value="${e.radius}" step="0.01"></div>
+                <div class="form-group"><label>K-factor</label><input type="number" id="editBE_k" value="${e.k}" step="0.0001"></div>
+                <div class="form-group"><label>BA (мм)</label><input type="number" id="editBE_ba" value="${e.ba}" step="0.001"></div>
+                <div class="form-group"><label>BD (мм)</label><input type="number" id="editBE_bd" value="${e.bd}" step="0.001"></div>
+                <div class="form-group"><label>Поправка (°/мм)</label><input type="number" id="editBE_corr" value="${e.corr}" step="0.01"></div>
+                <div class="form-group"><label>Комментарий</label><input type="text" id="editBE_comment" value="${e.comment || ''}"></div>
+            `;
+            document.getElementById('editBendEntryModal').classList.add('active');
+        }
+
+        function saveBendEntry() {
+            if (!editingBendEntry) return;
+            const bender = bendDB.benders.find(b => b.id === editingBendEntry.benderId);
+            bender.entries[editingBendEntry.idx] = {
+                die: document.getElementById('editBE_die').value.trim(),
+                thickness: parseFloat(document.getElementById('editBE_thickness').value),
+                material: document.getElementById('editBE_material').value.trim(),
+                radius: parseFloat(document.getElementById('editBE_radius').value),
+                k: parseFloat(document.getElementById('editBE_k').value),
+                ba: parseFloat(document.getElementById('editBE_ba').value),
+                bd: parseFloat(document.getElementById('editBE_bd').value),
+                corr: parseFloat(document.getElementById('editBE_corr').value) || 0,
+                comment: document.getElementById('editBE_comment').value.trim()
+            };
+            saveBendDB(); updateBenderEntries(); updateBendersList();
+            closeModal('editBendEntryModal'); editingBendEntry = null;
+        }
+
+        function deleteBendEntry() {
+            if (!editingBendEntry || !confirm('Удалить запись?')) return;
+            const bender = bendDB.benders.find(b => b.id === editingBendEntry.benderId);
+            bender.entries.splice(editingBendEntry.idx, 1);
+            saveBendDB(); updateBenderEntries(); updateBendersList();
+            closeModal('editBendEntryModal'); editingBendEntry = null;
+        }
+
+        function exportBendDB() {
+            const json = JSON.stringify(bendDB, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bend-db-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importBendDB(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm('Импортировать базу листогибов? Текущие данные будут заменены.')) {
+                        bendDB = imported;
+                        saveBendDB(); updateBendersList(); updateBenderSelectors();
+                        alert('База импортирована!');
+                    }
+                } catch (err) { alert('Ошибка: ' + err.message); }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ========== CLOUD SYNC ==========
+
+        let syncDebounceTimer = null;
+        let syncPulling = false;  // guard against sync loop
+
+        function getSyncUrl() {
+            return (document.getElementById('syncUrl')?.value || '').trim();
+        }
+
+        function isSyncEnabled() {
+            return document.getElementById('syncAutoEnabled')?.checked && getSyncUrl().length > 10;
+        }
+
+        function saveSyncSettings() {
+            localStorage.setItem('syncUrl', getSyncUrl());
+            localStorage.setItem('syncAutoEnabled', document.getElementById('syncAutoEnabled').checked);
+            updateSyncBadge(getSyncUrl() ? 'ok' : 'off', getSyncUrl() ? '✅ Настроено' : '⚪ Не настроено');
+        }
+
+        function loadSyncSettings() {
+            const url = localStorage.getItem('syncUrl') || '';
+            const auto = localStorage.getItem('syncAutoEnabled');
+            document.getElementById('syncUrl').value = url;
+            document.getElementById('syncAutoEnabled').checked = auto === null ? true : auto === 'true';
+            if (url) {
+                updateSyncBadge('ok', '✅ Настроено');
+                syncFromCloud();
+            }
+        }
+
+        function updateSyncBadge(cls, text) {
+            const badge = document.getElementById('syncStatusBadge');
+            badge.className = 'sync-status ' + cls;
+            badge.textContent = text;
+        }
+
+        function setSyncTime() {
+            const el = document.getElementById('syncLastTime');
+            el.textContent = 'Последняя синхр.: ' + new Date().toLocaleTimeString();
+        }
+
+        function syncToCloud() {
+            if (!isSyncEnabled() || syncPulling) return;
+            clearTimeout(syncDebounceTimer);
+            syncDebounceTimer = setTimeout(async () => {
+                try {
+                    updateSyncBadge('syncing', '🟡 Синхронизация...');
+                    const payload = {
+                        laserDB: JSON.stringify(db),
+                        bendDB: JSON.stringify(bendDB)
+                    };
+                    const resp = await fetch(getSyncUrl(), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    updateSyncBadge('ok', '🟢 Синхронизировано');
+                    setSyncTime();
+                } catch (e) {
+                    console.error('Sync push error:', e);
+                    updateSyncBadge('error', '🔴 Ошибка: ' + e.message);
+                }
+            }, 2000);
+        }
+
+        async function syncFromCloud() {
+            const url = getSyncUrl();
+            if (!url) return;
+            try {
+                updateSyncBadge('syncing', '🟡 Загрузка...');
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const data = await resp.json();
+                if (data.laserDB) {
+                    const parsed = typeof data.laserDB === 'string' ? JSON.parse(data.laserDB) : data.laserDB;
+                    if (parsed.machines) {
+                        db = parsed;
+                        syncPulling = true;
+                        saveDatabase();
+                        syncPulling = false;
+                        updateMachinesList();
+                        updateMachineSelectors();
+                    }
+                }
+                if (data.bendDB) {
+                    const parsed = typeof data.bendDB === 'string' ? JSON.parse(data.bendDB) : data.bendDB;
+                    if (parsed.benders) {
+                        bendDB = parsed;
+                        syncPulling = true;
+                        saveBendDB();
+                        syncPulling = false;
+                        updateBendersList();
+                        updateBenderSelectors();
+                    }
+                }
+                updateSyncBadge('ok', '🟢 Синхронизировано');
+                setSyncTime();
+            } catch (e) {
+                console.error('Sync pull error:', e);
+                updateSyncBadge('error', '🔴 Ошибка: ' + e.message);
+            }
+        }
+
+        async function manualSyncUp() {
+            if (!getSyncUrl()) { alert('Вставьте URL'); return; }
+            try {
+                updateSyncBadge('syncing', '🟡 Отправка...');
+                const payload = {
+                    laserDB: JSON.stringify(db),
+                    bendDB: JSON.stringify(bendDB)
+                };
+                const resp = await fetch(getSyncUrl(), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                });
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                updateSyncBadge('ok', '🟢 Отправлено!');
+                setSyncTime();
+            } catch (e) {
+                updateSyncBadge('error', '🔴 ' + e.message);
+            }
+        }
+
+        async function manualSyncDown() {
+            if (!getSyncUrl()) { alert('Вставьте URL'); return; }
+            if (!confirm('Загрузить данные из облака? Локальные данные будут заменены.')) return;
+            await syncFromCloud();
+        }
+
+        // ========== Patch save functions for auto-sync ==========
+
+        const _origSaveDatabase = saveDatabase;
+        saveDatabase = function () {
+            _origSaveDatabase();
+            syncToCloud();
+        };
+
+        const _origSaveBendDB = saveBendDB;
+        saveBendDB = function () {
+            _origSaveBendDB();
+            syncToCloud();
+        };
+
+        // ========== Init ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            onBsModeChange();
+            loadDatabase();
+            loadBendDB();
+            loadSyncSettings();
+        });
+    </script>
+</body>
+
+</html>
